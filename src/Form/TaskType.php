@@ -39,12 +39,12 @@ class TaskType extends AbstractType
             ->add('slug', TextType::class, [
                 'required' => false,
             ])
-            ->add('status', ChoiceType::class, [
-                'choices' => TaskStatus::getChoices(),
-                'choice_label' => function($choice, $key, $value) {
-                    return $key; // Utilise la clé comme étiquette
-                }
-            ])
+            // ->add('status', ChoiceType::class, [
+            //     'choices' => TaskStatus::getChoices(),
+            //     'choice_label' => function($choice, $key, $value) {
+            //         return $key; // Utilise la clé comme étiquette
+            //     }
+            // ])
             ->add('description')
             ->add('estimates', TextType::class, [
                 'label' => 'Estimation'
@@ -56,6 +56,7 @@ class TaskType extends AbstractType
                 'label' => 'Enregistrer'
             ])
             ->addEventListener(FormEvents::PRE_SUBMIT, $this->autoSlug(...))
+            // ->addEventListener(FormEvents::PRE_SUBMIT, $this->statusEnum(...))
             ->addEventListener(FormEvents::POST_SUBMIT, $this->attachTimestamps(...))
             ->addEventListener(FormEvents::POST_SUBMIT, $this->handleUpload(...))
         ;
@@ -70,6 +71,12 @@ class TaskType extends AbstractType
             $data['slug'] = strtolower($slugger->slug($data['title']));
             $event->setData($data);
         }
+    }
+
+    private function statusEnum(PreSubmitEvent $event) : void {
+        $data = $event->getData();
+        $data['status'] = null;
+        $event->setData($data);
     }
 
     private function handleUpload(PostSubmitEvent $event) : void {

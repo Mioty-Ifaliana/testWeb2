@@ -25,4 +25,14 @@ enum TaskStatus: string
             self::COMPLETED->value,
         ];
     }
+
+    public static function fromString(string $value): self
+    {
+        return match ($value) {
+            'Pending' => self::PENDING,
+            'In Progress' => self::IN_PROGRESS,
+            'Completed' => self::COMPLETED,
+            default => throw new \InvalidArgumentException("Invalid status: $value"),
+        };
+    }
 }

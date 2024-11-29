@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Task;
+use App\Enum\TaskStatus;
 use App\Form\TaskType;
 use App\Repository\TaskRepository;
 use App\Service\DeleteService;
@@ -78,6 +79,8 @@ class TaskController extends AbstractController
     {
         $task = new Task();
         $form = $this->createForm(TaskType::class, $task);
+        // $dataTask = $request->request->all()['task'];
+        // $task->setStatus(TaskStatus::fromString($dataTask['status']));
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
