@@ -61,8 +61,6 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    nodejs \
-    npm \
     libzip-dev \
     libicu-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -97,9 +95,6 @@ WORKDIR /var/www
 # Copy from builder
 COPY --from=builder /app/vendor ./vendor
 COPY --from=builder /app .
-
-# Install and build frontend assets
-RUN npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
