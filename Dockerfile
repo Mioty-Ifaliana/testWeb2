@@ -1,16 +1,53 @@
 # Build stage
-FROM composer:2 as builder
+FROM php:8.2-cli as builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    libzip-dev \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-configure intl && \
+    docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache \
+    ctype \
+    iconv
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Configure PHP for Composer
+RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory-limit.ini
 
 WORKDIR /app
 
-# Copy composer files
+# Copy composer files first
 COPY composer.json composer.lock ./
+
+# Install dependencies
+RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
+
+# Copy rest of the application
 COPY . .
 
-# Show Composer version and debug info
-RUN composer --version && \
-    composer diagnose && \
-    composer install --no-interaction --optimize-autoloader --no-dev -v
+# Run composer scripts after all files are available
+RUN composer dump-autoload --optimize --no-dev
 
 # Production stage
 FROM php:8.2-fpm
@@ -57,7 +94,7 @@ RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory-limit.ini \
 # Set working directory
 WORKDIR /var/www
 
-# Copy composer dependencies from builder stage
+# Copy from builder
 COPY --from=builder /app/vendor ./vendor
 COPY --from=builder /app .
 
