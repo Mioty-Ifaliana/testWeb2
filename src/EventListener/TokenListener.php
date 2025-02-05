@@ -37,8 +37,16 @@ class TokenListener
         if (count($attributes) > 0) {
             // Récupérer la requête
             $request = $event->getRequest();
-
-            // Extraire et valider le token
+            
+            if($this->jwtTokenManager->extractTokenFromRequest($request) == null)
+            {
+                $event->setController(function () {
+                    return new JsonResponse(['error' => 'Null le token ooo'], Response::HTTP_UNAUTHORIZED);
+                });
+            }
+            else{
+                
+             // Extraire et valider le token
             $tokenString = $this->jwtTokenManager->extractTokenFromRequest($request);
             $parsedToken = $this->jwtTokenManager->parseToken($tokenString);
 
@@ -48,6 +56,11 @@ class TokenListener
                     return new JsonResponse(['error' => 'Invalid or expired token'], Response::HTTP_UNAUTHORIZED);
                 });
             }
+
+            }
+           
         }
     }
 }
+
+

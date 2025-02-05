@@ -2,7 +2,11 @@
 
 namespace App\Form;
 
+use App\Entity\Category;
+use App\Entity\Project;
+use App\Entity\User;
 use App\Entity\Task;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use App\Enum\TaskStatus;
 use App\Service\FileUploadService;
 use DateTimeImmutable;
@@ -27,6 +31,7 @@ class TaskType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $categories = $options['categories'] ?? [];
         $builder
             ->add('title', TextType::class, [
                 'label' => 'Titre'
@@ -38,6 +43,27 @@ class TaskType extends AbstractType
             ])
             ->add('slug', TextType::class, [
                 'required' => false,
+            ])
+
+            ->add('Category',EntityType::class, [
+                'class' => Category::class,
+                'choice_label' => 'label',
+                'placeholder' => 'Choisissez une catégorie',
+                'required' => true,
+            ])
+            ->add('Project',EntityType::class, [
+                'class' => Project::class,
+                'choice_label' => 'name',
+                'placeholder' => 'Choisissez un project',
+                'required' => true,
+            ])
+            ->add('assignees',EntityType::class, [
+                'class' => User::class,
+                'multiple'=>true,
+                'expanded'=>true,
+                'choice_label' => 'username',
+                'placeholder' => 'Choisissez un user',
+                'required' => true,
             ])
             // ->add('status', ChoiceType::class, [
             //     'choices' => TaskStatus::getChoices(),
@@ -91,7 +117,10 @@ class TaskType extends AbstractType
             $filename = $this->uploadService->upload($file);
             
             // Assigner le nom du fichier à une propriété de l'entité (par exemple, fileName)
-            $task->setAttachments($filename);
+            if($filename)
+            {
+                $task->setFile($filename);
+            }
         }
     
     }
