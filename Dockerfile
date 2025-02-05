@@ -1,6 +1,22 @@
+# Utiliser l'image officielle de Composer comme première étape
+FROM composer:2.6 as composer_stage
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers composer
+COPY composer.json composer.lock ./
+
+# Copier le reste du projet
+COPY . .
+
+# Installer les dépendances
+RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Deuxième étape : l'image PHP finale
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,10 +26,12 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
-    libicu-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libicu-dev
 
-# Install PHP extensions
+# Nettoyer le cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Installer les extensions PHP
 RUN docker-php-ext-configure intl && \
     docker-php-ext-install \
     pdo_mysql \
@@ -28,25 +46,13 @@ RUN docker-php-ext-configure intl && \
     ctype \
     iconv
 
-# Configure PHP
-RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory-limit.ini \
-    && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
-    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini
-
-# Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Set working directory
+# Définir le répertoire de travail
 WORKDIR /var/www
 
-# Copy existing application directory
-COPY . .
+# Copier l'application depuis l'étape du composer
+COPY --from=composer_stage /app /var/www
 
-# Install dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
-
-# Set permissions
+# Définir les permissions
 RUN chown -R www-data:www-data /var/www
 
 EXPOSE 80
