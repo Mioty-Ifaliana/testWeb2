@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: m-esakafo
+    env: php
+    buildCommand: composer install --no-interaction --optimize-autoloader --no-dev
+    startCommand: php-fpm
+    envVars:
+      - key: APP_ENV
+        value: prod
+      - key: APP_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+    buildFilter:
+      paths:
+        - composer.json
+        - composer.lock
+        - config/**
+        - public/**
+        - src/**
+        - templates/**
+        - vendor/**
