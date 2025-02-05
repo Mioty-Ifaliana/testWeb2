@@ -5,6 +5,7 @@ WORKDIR /app
 
 # Copy composer files
 COPY composer.json composer.lock ./
+COPY . .
 
 # Install dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
@@ -23,22 +24,32 @@ RUN apt-get update && apt-get install -y \
     unzip \
     nodejs \
     npm \
-    libzip-dev
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    libzip-dev \
+    libicu-dev
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+RUN docker-php-ext-configure intl
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
+
+# Configure PHP
+COPY php.ini-production /usr/local/etc/php/php.ini
+RUN sed -i 's/memory_limit = 128M/memory_limit = 256M/g' /usr/local/etc/php/php.ini
 
 # Set working directory
 WORKDIR /var/www
 
 # Copy composer dependencies from builder stage
 COPY --from=builder /app/vendor ./vendor
-
-# Copy the rest of the application
-COPY . .
+COPY --from=builder /app .
 
 # Install and build frontend assets
 RUN npm install
