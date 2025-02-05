@@ -2,8 +2,12 @@ services:
   - type: web
     name: m-esakafo
     env: php
-    buildCommand: composer install --no-interaction --optimize-autoloader --no-dev
-    startCommand: php-fpm
+    plan: free
+    runtime: php
+    buildCommand: |
+      curl -sS https://getcomposer.org/installer | php
+      php composer.phar install --no-interaction --optimize-autoloader --no-dev
+    startCommand: heroku-php-apache2 public/
     envVars:
       - key: APP_ENV
         value: prod
