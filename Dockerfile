@@ -41,8 +41,13 @@ RUN docker-php-ext-install \
     opcache
 
 # Configure PHP
-COPY php.ini-production /usr/local/etc/php/php.ini
-RUN sed -i 's/memory_limit = 128M/memory_limit = 256M/g' /usr/local/etc/php/php.ini
+RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
+    && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "realpath_cache_size=4096K" >> /usr/local/etc/php/conf.d/realpath.ini \
+    && echo "realpath_cache_ttl=600" >> /usr/local/etc/php/conf.d/realpath.ini
 
 # Set working directory
 WORKDIR /var/www
