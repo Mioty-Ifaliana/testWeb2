@@ -13,8 +13,8 @@ WORKDIR /app
 # Copier tous les fichiers du projet dans /app
 COPY . .
 
-# Changer les permissions du dossier var pour éviter les erreurs d'écriture
-RUN chmod -R 777 var
+# Créer le dossier var et modifier ses permissions
+RUN mkdir -p var && chmod -R 777 var
 
 # Exposer le port 8000 (juste à titre indicatif, Render le gère automatiquement)
 EXPOSE 8000
