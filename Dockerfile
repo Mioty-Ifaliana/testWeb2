@@ -7,8 +7,10 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 COPY . .
 
-# Install dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Show Composer version and debug info
+RUN composer --version && \
+    composer diagnose && \
+    composer install --no-interaction --optimize-autoloader --no-dev -v
 
 # Production stage
 FROM php:8.2-fpm
@@ -25,11 +27,12 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     libzip-dev \
-    libicu-dev
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-configure intl
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure intl && \
+    docker-php-ext-install \
     pdo_mysql \
     mbstring \
     exif \
@@ -38,10 +41,12 @@ RUN docker-php-ext-install \
     gd \
     zip \
     intl \
-    opcache
+    opcache \
+    ctype \
+    iconv
 
 # Configure PHP
-RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
+RUN echo "memory_limit=512M" > /usr/local/etc/php/conf.d/memory-limit.ini \
     && echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
@@ -57,8 +62,7 @@ COPY --from=builder /app/vendor ./vendor
 COPY --from=builder /app .
 
 # Install and build frontend assets
-RUN npm install
-RUN npm run build
+RUN npm install && npm run build
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www
